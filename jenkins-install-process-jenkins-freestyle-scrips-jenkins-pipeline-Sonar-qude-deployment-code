@@ -1,0 +1,159 @@
+-----------------------------------------------------------------------------
+
+jenkines install process ..
+#!/bin/bash
+
+sudo apt update
+
+sudo apt install fontconfig -y openjdk-17-jre
+
+sudo wget -O /usr/share/keyrings/jenkins-keyring.asc \
+  https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+
+echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc]" \
+  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+  /etc/apt/sources.list.d/jenkins.list > /dev/null
+
+sudo apt-get update
+
+sudo apt-get install  -y jenkins
+
+sudo systemctl restart jenkins
+
+sudo apt install docker.io
+
+sudo chmod 777 /var/run/docker.sock 
+......Next step.....
+
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+password will come....
+-----------------------------------------------------------------------------
+jenkines freestyle scrips....
+
+docker build -t arunmagi/html .
+
+docker  images
+
+docker login -u arunmagi -p Arun@ak@99
+
+docker push arunmagi/html
+
+docker rm -f html-app || docker rm -f html-app
+
+docker run -d --name html-app -p 82:80 arunmagi/html
+
+--------------------------------------------------------------------------
+jenkines pipeline.......
+
+
+pipeline{
+    agent any
+    stages{
+        stage("clone"){
+            steps{
+             git branch: 'main', url: 'https://github.com/kishoreav14/sample-html-app.git'
+             sh "ls"
+           }
+        }
+        stage("docker image"){
+            steps{
+                sh "docker build -t kishoreav/html-app ."
+                
+            }
+        }
+        stage("dockerhub"){
+            steps{
+                sh "docker login -u kishoreav -p B2H?zx7,VvLFhhi"
+                sh "docker push kishoreav/html-app"
+            }
+        }
+        stage("remove container"){
+            steps{
+                sh "docker rm -f html-app||docker rm -f html-app"
+            }
+        }
+        stage("docker container"){
+            steps{
+                sh "docker run -d --name html-app -p 82:80 kishoreav/html-app"
+           }
+        }
+    }
+}
+
+----------------------------------------------------------------------------
+scripted pipeline.......
+
+
+node{
+    stage("clone"){
+        git branch: 'main', url: 'https://github.com/kishoreav14/sample-node-app.git'
+        sh "ls"
+   }
+   stage("docker build"){
+       sh "docker build -t kishoreav/node-app  ."
+       
+   }
+   stage("dockerhub"){
+       sh "docker login -u kishoreav -p B2H?zx7,VvLFhhi"
+   }
+   stage("docker push"){
+        sh "docker push kishoreav/node-app"
+   }
+   stage("remove container"){
+       sh "docker rm -f scripted-node || docker rm -f scripted-node"
+   }
+   stage("docker container"){
+       sh "docker run -d --name scripted-node -p 9000:9000 kishoreav/node-app"
+   }
+}
+   
+---------------------------------------------------------------------------------------------------------
+............jenkins sonar Qube installtion............
+
+
+docker run -d --name sonarqube -p 9000:9000 -p 9092:9092 sonarqube
+
+
+---------------next step----------------
+..........jenkins sonar Qube..........
+
+node{
+    stage("clone"){
+        git branch: 'main', url: 'https://github.com/kishoreav14/sample-java-spring-app.git'
+    }
+    stage('SonarQube Analysis') {
+            withSonarQubeEnv('sonarqube') { // Use the SonarQube server configured in Jenkins
+              sh "mvn install sonar:sonar"
+            }
+        }
+        
+}
+
+
+------------------------------------------------------------------------------
+---------jenkins deployment code------------
+
+
+node{
+    stage("clone"){
+        git branch: 'main', url: 'https://github.com/kishoreav14/sample-java-spring-app.git'
+   }
+   stage("mvn"){
+       sh "mvn clean install"
+   }
+   stage("docker build"){
+       sh "docker build -t kishoreav/java  ."
+       
+   }
+   stage("dockerhub"){
+       sh "docker login -u kishoreav -p B2H?zx7,VvLFhhi"
+       sh "docker push kishoreav/java"
+   }
+}
+node("k8s"){
+    stage("deployment"){
+        sh "sudo kubectl rollout restart deployment/java-app"
+    }
+    
+
+ 
