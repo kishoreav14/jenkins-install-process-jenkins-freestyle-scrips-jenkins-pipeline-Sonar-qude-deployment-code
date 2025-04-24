@@ -159,4 +159,26 @@ node("k8s"){
     }
     
 
- 
+ ---------------piple scripted in jenkines instances the one cmd-----------------------------
+
+node{
+    stage("clone"){
+        git branch: 'main', url: 'https://github.com/kishoreav14/sample-java-spring-app.git'
+    }
+    stage("mvn "){
+    sh "mvn clean install"
+    }
+    stage("docker build"){
+    sh "docker build -t kishoreav/java ."
+    }
+    stage("docker hub"){
+    sh "docker login -u kishoreav -p Sukiva@123"
+    sh "docker push kishoreav/java"
+}
+}
+node("k8s"){
+    stage("deployment"){
+        sh "export KUBECONFIG=/etc/kubernetes/admin.conf"
+        sh "sudo kubectl rollout restart deployment/java-app"
+    }
+}
